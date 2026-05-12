@@ -1,0 +1,681 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Residential Nav-Link | Liquid Glass Interface</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+
+    <style>
+        :root {
+            --glass-bg: rgba(20, 30, 40, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.25);
+            --accent-color: #00e5ff;
+            --accent-glow: 0 0 20px rgba(0, 229, 255, 0.6);
+            --text-main: #e0f7fa;
+            --text-muted: #84cdd3;
+            --font-stack: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --transition-speed: 0.4s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background-color: #05080a;
+            font-family: var(--font-stack);
+            color: var(--text-main);
+        }
+
+        /* --- LIQUID GLASS COMPONENTS --- */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* --- SPLASH BOOT SEQUENCE --- */
+        #boot-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #020405;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1.2s cubic-bezier(0.8, 0, 0.2, 1);
+        }
+
+        .logo-ring {
+            width: 150px; height: 150px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
+            position: relative;
+        }
+
+        .logo-ring::before {
+            content: ''; position: absolute;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 2px solid transparent;
+            border-right: 2px solid var(--text-main);
+            border-radius: 50%;
+            animation: spin-reverse 3s linear infinite;
+        }
+
+        .boot-text {
+            margin-top: 30px;
+            font-size: 1.5rem;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            text-shadow: var(--accent-glow);
+            animation: pulse 2s infinite;
+        }
+
+        .sys-log {
+            margin-top: 20px;
+            font-family: monospace;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            width: 300px;
+            height: 60px;
+            overflow: hidden;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        #panorama-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none; 
+        }
+
+        /* --- TOP HUD --- */
+        .top-hud {
+            position: absolute;
+            top: 20px; left: 20px; right: 20px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: auto;
+        }
+
+        .hud-module {
+            padding: 15px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hud-module::after {
+            content: ''; position: absolute;
+            top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--accent-color);
+            box-shadow: var(--accent-glow);
+        }
+
+        .hud-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+        }
+
+        .hud-data {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* --- SIDEBAR NAVIGATION --- */
+        #nav-toggle {
+            position: absolute;
+            top: 20px; right: 20px;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: var(--transition-speed);
+        }
+
+        #nav-toggle:hover {
+            background: var(--glass-highlight);
+            box-shadow: var(--accent-glow);
+        }
+
+        .hamburger {
+            width: 24px; height: 2px;
+            background: var(--text-main);
+            position: relative;
+        }
+
+        .hamburger::before, .hamburger::after {
+            content: ''; position: absolute;
+            width: 24px; height: 2px;
+            background: var(--text-main);
+            left: 0; transition: 0.3s;
+        }
+        .hamburger::before { top: -8px; }
+        .hamburger::after { top: 8px; }
+
+        #sidebar {
+            position: absolute;
+            top: 90px; right: 20px;
+            width: 300px;
+            max-height: calc(100vh - 120px);
+            padding: 20px;
+            transform: translateX(120%);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
+            overflow-y: auto;
+        }
+
+        #sidebar.active {
+            transform: translateX(0);
+        }
+
+        .nav-category {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            letter-spacing: 3px;
+            margin: 20px 0 10px 0;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 5px;
+        }
+
+        .nav-btn {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: var(--font-stack);
+            font-size: 0.95rem;
+        }
+
+        .nav-btn:hover {
+            background: rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.3);
+            padding-left: 20px;
+        }
+
+        .nav-btn.active-room {
+            background: rgba(0, 229, 255, 0.2);
+            border-left: 3px solid var(--accent-color);
+        }
+
+        /* --- BOTTOM CONTROLS --- */
+        .bottom-hud {
+            position: absolute;
+            bottom: 30px; left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            padding: 10px 20px;
+            pointer-events: auto;
+            border-radius: 30px;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 1rem;
+            cursor: pointer;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .control-btn:hover {
+            background: var(--glass-highlight);
+            color: var(--accent-color);
+        }
+
+        /* --- CUSTOM PANNELLUM STYLES --- */
+        .pnlm-compass {
+            bottom: 30px !important;
+            right: 30px !important;
+            width: 60px !important;
+            height: 60px !important;
+            border-radius: 50% !important;
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(10px) !important;
+            border: 1px solid var(--glass-border) !important;
+        }
+
+        .custom-hotspot {
+            width: 30px; height: 30px;
+            background: rgba(0, 229, 255, 0.2);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+            animation: pulse-ring 2s infinite;
+        }
+
+        .custom-hotspot::after {
+            content: ''; position: absolute;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 8px; height: 8px;
+            background: var(--text-main);
+            border-radius: 50%;
+        }
+
+        .custom-tooltip {
+            visibility: hidden;
+            position: absolute;
+            bottom: 40px; left: 50%; transform: translateX(-50%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            color: var(--text-main);
+            white-space: nowrap;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transition: 0.3s;
+        }
+
+        .custom-hotspot:hover .custom-tooltip {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes pulse-ring { 
+            0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.7); } 
+            70% { box-shadow: 0 0 0 15px rgba(0, 229, 255, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); } 
+        }
+
+        /* Scrollbar styling for sidebar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+    </style>
+</head>
+<body>
+
+    <!-- BOOT SEQUENCE -->
+    <div id="boot-screen">
+        <div class="logo-ring"></div>
+        <div class="boot-text">INITIALIZING ENV</div>
+        <div class="sys-log" id="sys-log"></div>
+    </div>
+
+    <!-- MAIN APP LAYER -->
+    <div id="panorama-container">
+        <div id="panorama"></div>
+    </div>
+
+    <!-- LIQUID GLASS UI LAYER -->
+    <div id="ui-layer">
+        
+        <div class="top-hud">
+            <div class="glass-panel hud-module" style="width: 250px;">
+                <div class="hud-title">Current Sector</div>
+                <div class="hud-data" id="ui-room-name">FRONT PORCH</div>
+            </div>
+            
+            <div id="nav-toggle" class="glass-panel">
+                <div class="hamburger"></div>
+            </div>
+        </div>
+
+        <div id="sidebar" class="glass-panel">
+            <div class="nav-category">EXTERIOR FRONT</div>
+            <button class="nav-btn active-room" onclick="loadScene('front_porch')">Front Porch</button>
+            <button class="nav-btn" onclick="loadScene('driveway')">Driveway</button>
+            
+            <div class="nav-category">INTERIOR L1 MAIN</div>
+            <button class="nav-btn" onclick="loadScene('foyer')">Foyer / Entry</button>
+            <button class="nav-btn" onclick="loadScene('living_room')">Living Room</button>
+            <button class="nav-btn" onclick="loadScene('dining_room')">Dining Room</button>
+            <button class="nav-btn" onclick="loadScene('kitchen')">Kitchen</button>
+            <button class="nav-btn" onclick="loadScene('pantry')">Pantry</button>
+            
+            <div class="nav-category">INTERIOR L1 WING</div>
+            <button class="nav-btn" onclick="loadScene('hallway_main')">Main Hallway</button>
+            <button class="nav-btn" onclick="loadScene('bathroom_half')">Half Bath</button>
+            <button class="nav-btn" onclick="loadScene('guest_bedroom')">Guest Bedroom</button>
+            <button class="nav-btn" onclick="loadScene('laundry_room')">Laundry Room</button>
+            <button class="nav-btn" onclick="loadScene('garage_interior')">Garage Interior</button>
+            <button class="nav-btn" onclick="loadScene('sunroom')">Sunroom</button>
+            
+            <div class="nav-category">EXTERIOR BACK</div>
+            <button class="nav-btn" onclick="loadScene('back_door')">Back Door / Steps</button>
+            <button class="nav-btn" onclick="loadScene('patio_deck')">Patio Deck</button>
+            <button class="nav-btn" onclick="loadScene('backyard_center')">Backyard Center</button>
+            <button class="nav-btn" onclick="loadScene('backyard_left')">Backyard Left Wing</button>
+            <button class="nav-btn" onclick="loadScene('backyard_right')">Backyard Right Wing</button>
+            <button class="nav-btn" onclick="loadScene('garden_path')">Garden Path</button>
+            <button class="nav-btn" onclick="loadScene('bbq_area')">BBQ Area</button>
+            <button class="nav-btn" onclick="loadScene('shed_exterior')">Tool Shed Exterior</button>
+        </div>
+
+        <div class="glass-panel bottom-hud">
+            <button class="control-btn" onclick="viewer.setPitch(viewer.getPitch() + 10)">▲</button>
+            <button class="control-btn" onclick="viewer.setYaw(viewer.getYaw() - 10)">◀</button>
+            <button class="control-btn" onclick="viewer.setYaw(viewer.getYaw() + 10)">▶</button>
+            <button class="control-btn" onclick="viewer.setPitch(viewer.getPitch() - 10)">▼</button>
+            <div style="width: 1px; background: var(--glass-border); margin: 0 10px;"></div>
+            <button class="control-btn" onclick="viewer.setHfov(viewer.getHfov() - 10)">+</button>
+            <button class="control-btn" onclick="viewer.setHfov(viewer.getHfov() + 10)">-</button>
+            <button class="control-btn" onclick="viewer.toggleFullscreen()">⛶</button>
+        </div>
+
+    </div>
+
+<script>
+    // --- BOOT SEQUENCE LOGIC ---
+    const logs = [
+        "Mounting Liquid Glass protocols...",
+        "Loading 20 spatial mapping nodes...",
+        "Calibrating yaw/pitch gyros...",
+        "Decrypting external coordinates...",
+        "Establishing neural-link interface...",
+        "SYSTEM READY."
+    ];
+    let logIndex = 0;
+    const logEl = document.getElementById('sys-log');
+    
+    const bootInterval = setInterval(() => {
+        if(logIndex < logs.length) {
+            logEl.innerHTML += `<div>> ${logs[logIndex]}</div>`;
+            logEl.scrollTop = logEl.scrollHeight;
+            logIndex++;
+        } else {
+            clearInterval(bootInterval);
+            setTimeout(() => {
+                document.getElementById('boot-screen').style.opacity = '0';
+                setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 1200);
+            }, 800);
+        }
+    }, 400);
+
+    // --- SIDEBAR TOGGLE ---
+    document.getElementById('nav-toggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    // --- CUSTOM HOTSPOT CREATOR ---
+    function hotspotIcon(hotSpotDiv, args) {
+        hotSpotDiv.classList.add('custom-hotspot');
+        var tooltip = document.createElement('div');
+        tooltip.classList.add('custom-tooltip');
+        tooltip.innerHTML = args.text;
+        hotSpotDiv.appendChild(tooltip);
+    }
+
+    // --- PANNELLUM CONFIGURATION (20 SCENES) ---
+    const viewer = pannellum.viewer('panorama', {
+        "default": {
+            "firstScene": "front_porch",
+            "sceneFadeDuration": 1200,
+            "autoLoad": true,
+            "compass": true,
+            "showControls": false,
+            "friction": 0.15
+        },
+        "scenes": {
+            "front_porch": {
+                "title": "Front Porch",
+                "type": "equirectangular",
+                "panorama": "placeholders/front_porch.jpg",
+                "yaw": 0, "pitch": 0,
+                "hotSpots": [
+                    { "pitch": -5, "yaw": 0, "type": "scene", "text": "Enter Foyer", "sceneId": "foyer", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Enter House" } },
+                    { "pitch": -10, "yaw": 180, "type": "scene", "text": "Driveway", "sceneId": "driveway", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Go to Driveway" } }
+                ]
+            },
+            "driveway": {
+                "title": "Driveway",
+                "type": "equirectangular",
+                "panorama": "placeholders/driveway.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "front_porch", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Walk to Porch" } }
+                ]
+            },
+            "foyer": {
+                "title": "Foyer / Entry",
+                "type": "equirectangular",
+                "panorama": "placeholders/foyer.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "front_porch", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Exit House" } },
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "living_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Living Room" } },
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "hallway_main", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Main Hallway" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "kitchen", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Kitchen" } }
+                ]
+            },
+            "living_room": {
+                "title": "Living Room",
+                "type": "equirectangular",
+                "panorama": "placeholders/living_room.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "foyer", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Foyer" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "dining_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Dining Room" } }
+                ]
+            },
+            "dining_room": {
+                "title": "Dining Room",
+                "type": "equirectangular",
+                "panorama": "placeholders/dining_room.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "living_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Living Room" } },
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "kitchen", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Kitchen" } }
+                ]
+            },
+            "kitchen": {
+                "title": "Kitchen",
+                "type": "equirectangular",
+                "panorama": "placeholders/kitchen.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "foyer", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Foyer" } },
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "dining_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Dining Room" } },
+                    { "pitch": 0, "yaw": -45, "type": "scene", "sceneId": "pantry", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Pantry" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "sunroom", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Sunroom" } }
+                ]
+            },
+            "pantry": {
+                "title": "Pantry",
+                "type": "equirectangular",
+                "panorama": "placeholders/pantry.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "kitchen", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Back to Kitchen" } }
+                ]
+            },
+            "hallway_main": {
+                "title": "Main Hallway",
+                "type": "equirectangular",
+                "panorama": "placeholders/hallway_main.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "foyer", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Foyer" } },
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "bathroom_half", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Half Bath" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "guest_bedroom", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Guest Bedroom" } },
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "laundry_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Laundry Room" } }
+                ]
+            },
+            "bathroom_half": {
+                "title": "Half Bath",
+                "type": "equirectangular",
+                "panorama": "placeholders/bathroom_half.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "hallway_main", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Hallway" } }
+                ]
+            },
+            "guest_bedroom": {
+                "title": "Guest Bedroom",
+                "type": "equirectangular",
+                "panorama": "placeholders/guest_bedroom.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "hallway_main", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Hallway" } }
+                ]
+            },
+            "laundry_room": {
+                "title": "Laundry Room",
+                "type": "equirectangular",
+                "panorama": "placeholders/laundry_room.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "hallway_main", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Hallway" } },
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "garage_interior", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Garage" } }
+                ]
+            },
+            "garage_interior": {
+                "title": "Garage Interior",
+                "type": "equirectangular",
+                "panorama": "placeholders/garage_interior.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "laundry_room", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Laundry Room" } }
+                ]
+            },
+            "sunroom": {
+                "title": "Sunroom",
+                "type": "equirectangular",
+                "panorama": "placeholders/sunroom.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "kitchen", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Kitchen" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "back_door", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Back Door" } }
+                ]
+            },
+            "back_door": {
+                "title": "Back Door",
+                "type": "equirectangular",
+                "panorama": "placeholders/back_door.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "sunroom", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Sunroom" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "patio_deck", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Patio Deck" } }
+                ]
+            },
+            "patio_deck": {
+                "title": "Patio Deck",
+                "type": "equirectangular",
+                "panorama": "placeholders/patio_deck.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "back_door", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "House Entry" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "backyard_center", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Backyard Center" } },
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "bbq_area", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "BBQ Area" } }
+                ]
+            },
+            "backyard_center": {
+                "title": "Backyard Center",
+                "type": "equirectangular",
+                "panorama": "placeholders/backyard_center.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "patio_deck", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Patio" } },
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "backyard_left", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Left Wing" } },
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "backyard_right", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Right Wing" } }
+                ]
+            },
+            "backyard_left": {
+                "title": "Backyard Left Wing",
+                "type": "equirectangular",
+                "panorama": "placeholders/backyard_left.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 90, "type": "scene", "sceneId": "backyard_center", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Center" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "garden_path", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Garden Path" } }
+                ]
+            },
+            "backyard_right": {
+                "title": "Backyard Right Wing",
+                "type": "equirectangular",
+                "panorama": "placeholders/backyard_right.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "backyard_center", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Center" } },
+                    { "pitch": 0, "yaw": 0, "type": "scene", "sceneId": "shed_exterior", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Tool Shed" } }
+                ]
+            },
+            "garden_path": {
+                "title": "Garden Path",
+                "type": "equirectangular",
+                "panorama": "placeholders/garden_path.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "backyard_left", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Backyard Left" } }
+                ]
+            },
+            "bbq_area": {
+                "title": "BBQ Area",
+                "type": "equirectangular",
+                "panorama": "placeholders/bbq_area.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": -90, "type": "scene", "sceneId": "patio_deck", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Patio" } }
+                ]
+            },
+            "shed_exterior": {
+                "title": "Tool Shed Exterior",
+                "type": "equirectangular",
+                "panorama": "placeholders/shed_exterior.jpg",
+                "hotSpots": [
+                    { "pitch": 0, "yaw": 180, "type": "scene", "sceneId": "backyard_right", "createTooltipFunc": hotspotIcon, "createTooltipArgs": { "text": "Backyard Right" } }
+                ]
+            }
+        }
+    });
+
+    // --- UI UPDATER LOGIC ---
+    function updateUI() {
+        const currentSceneId = viewer.getScene();
+        const currentConfig = viewer.getConfig();
+        document.getElementById('ui-room-name').innerText = currentConfig.title.toUpperCase();
+        
+        // Update sidebar active state
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-room'));
+        const activeBtn = document.querySelector(`.nav-btn[onclick="loadScene('${currentSceneId}')"]`);
+        if(activeBtn) activeBtn.classList.add('active-room');
+    }
+
+    viewer.on('scenechange', updateUI);
+
+    // Sidebar loader function
+    window.loadScene = function(sceneId) {
+        viewer.loadScene(sceneId);
+        // On mobile, close sidebar after click
+        if(window.innerWidth < 768) {
+            document.getElementById('sidebar').classList.remove('active');
+        }
+    }
+</script>
+</body>
+</html>
